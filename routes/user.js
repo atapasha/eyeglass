@@ -1,9 +1,12 @@
+
+require('dotenv').config()
 const express = require('express')
 const router = express.Router()
+var jwt = require('jsonwebtoken')
 
 const UserModel = require('../models/user')
 
-const bycript = require('bcrypt');
+const bcrypt = require('bcrypt');
 
 async function hashPassword(password) {
 
@@ -20,7 +23,7 @@ router.post('/register', async (req, res) => {
 
     req.body.password = await hashPassword(req.body.password)
     console.log(req.body)
-    newUser = UserModel(req.body)
+    const newUser = new UserModel(req.body)
 
     await newUser.save()
     console.log(newUser)
@@ -31,27 +34,33 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
 
-
-
     const { email, phone, password } = req.body
-    const foundUser = await UserModel.findOne({ $or: [{ email }, { phone }] })
+
+    console.log(email, phone, password)
+    const foundUser = await UserModel.findOne({
+        email, phone, password
+    })
+
     if (foundUser) {
 
         console.log(password, foundUser.password)
-        await bcrypt.compare(password, foundUser.password)
-        console.log(password)
-        const passwordIscorrect = await bcrypt.compare(password, foundUser.password, function (err, result) {
 
-            result
-            console.log(result)
+        const passwordIscorrect = bcrypt.compare(password, foundUser.password)
+        console.log(passwordIscorrect)
+        if (passwordIscorrect) {
 
-        });
-
-
+            const token = jwt.sign({ _id: foundUser._id, name: foundUser.name }, process.env.PASSWORD_HASH_KEY)
+            return res.send(token)
+        }
 
     }
+    return res.send('false')
+}),
 
 
-})
+    router.get('/', (req, res) => {
+        res.send(req.user)
+    })
+
 
 module.exports = router 

@@ -23,10 +23,14 @@ const userSchema = new mongoose.Schema({
 
     email: {
         type: String,
+        unique: true,
+        dropDups: true
 
     },
     phone: {
         type: String,
+        dropDups: true,
+        required: true
 
     },
 
